@@ -21,4 +21,11 @@ In the source code, to change the markov order, you have to change the `markov` 
 
 Using jsMongoHal From Node.js
 ==================================
-TODO
+```js
+var MongoClient = require('mongodb').MongoClient;
+
+MongoClient.connect('mongodb://127.0.0.1:27017/jsmegahal', function(e, db) {
+  db.eval('function(x) { add(x); }', ["This is a sample sentence"], function() {});
+  db.dval('reply()', [], function(err, reply) { console.log(reply); });
+});
+```
