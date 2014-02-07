@@ -1,6 +1,6 @@
 var add = function(sentence) { 
 
-	var markov = 4;
+	var markov = 2;
 	var wordRegex = /[^a-zA-Z0-9,']+/;
 
 	if(sentence.split(' ').length < markov) return;
@@ -14,35 +14,54 @@ var add = function(sentence) {
 			canEnd: (i === parts.length - markov)
 		};
 
-		db.quads.insert({
+		db["quads_"+markov].update({
 			quad: quad
+		}, {
+			quad: quad
+		}, {
+			upsert: true
 		});
 
-		var quadId = db.quads.findOne({quad:quad})._id;
+		var quadId = db["quads_"+markov].findOne({quad:quad})._id;
 
 		for(var k = 0; k < quad.tokens.length; k++) {
-			db.words.insert({ 
+			db["words_"+markov].update({
+				word: quad.tokens[k],
+				quad: quadId
+			}, { 
 				word: quad.tokens[k],
 				quad: quadId,
 				random: [Math.random(), 0]
+			}, {
+				upsert: true
 			});
 		}
 
 		if(i !== 0) {
 			var prevToken = parts[i-1];
-			db.prev.insert({
+			db["prev_"+markov].update({
+				word: prevToken,
+				quad: quadId
+			}, {
 				word: prevToken,
 				quad: quadId,
 				random: [Math.random(), 0]
+			}, {
+				upsert: true
 			});
 		}
 
 		if(i < parts.length - markov) {
 			var nextToken = parts[i+markov];
-			db.next.insert({
+			db["next_"+markov].update({
+				word: nextToken,
+				quad: quadId
+			}, {
 				word: nextToken,
 				quad: quadId,
 				random: [Math.random(), 0]
+			}, {
+				upsert: true
 			});
 		}
 	}
@@ -50,18 +69,18 @@ var add = function(sentence) {
 
 var reply = function(word) {
 
-	var markov = 4;
+	var markov = 2;
 
-	db.words.ensureIndex( { random: "2dsphere" } );
-	db.next.ensureIndex( { random: "2dsphere" } );
-	db.prev.ensureIndex( { random: "2dsphere" } );
+	db["words_"+markov].ensureIndex( { random: "2dsphere" } );
+	db["next_"+markov].ensureIndex( { random: "2dsphere" } );
+	db["prev_"+markov].ensureIndex( { random: "2dsphere" } );
 
 	var createBaseOptions = function() {
 		return { random: { $near: { $geometry: { type: "Point", coordinates: [Math.random(), 0] } } } };
 	};
 
 	var lookup = function(id) {
-		return db.quads.findOne({_id: id});
+		return db["quads_"+markov].findOne({_id: id});
 	};
 
 	var createMiddleQuad = function(tokens) {
@@ -73,10 +92,14 @@ var reply = function(word) {
 	};
 
 	var insertQuad = function(quad) {
-		db.quads.insert({
+		db["quads_"+markov].update({
 			quad: quad
+		}, {
+			quad: quad
+		}, {
+			upsert: true
 		});
-		return db.quads.findOne({quad:quad});
+		return db["quads_"+markov].findOne({quad:quad});
 	};
 
 	var baseOptions = createBaseOptions();
@@ -86,7 +109,7 @@ var reply = function(word) {
 		baseOptions.word = word;
 	}
 
-	var _randQuad = db.words.findOne(options);
+	var _randQuad = db["words_"+markov].findOne(baseOptions);
 
 	if(!_randQuad) return "";
 	
@@ -101,7 +124,7 @@ var reply = function(word) {
 		var options = createBaseOptions();
 		options.quad = quad._id;
 
-		nextWord = db.next.findOne(options);
+		nextWord = db["next_"+markov].findOne(options);
 
 		if(!nextWord) break;
 
@@ -120,7 +143,7 @@ var reply = function(word) {
 		var options = createBaseOptions();
 		options.quad = quad._id;
 
-		prevWord = db.prev.findOne(options);
+		prevWord = db["prev_"+markov].findOne(options);
 
 		if(!prevWord) break;
 
@@ -136,10 +159,13 @@ var reply = function(word) {
 };
 
 var empty = function() {
-	db.words.drop();
-	db.quads.drop();
-	db.next.drop();
-	db.prev.drop();
+
+	var markov = 2;
+
+	db["words_"+markov].drop();
+	db["quads_"+markov].drop();
+	db["next_"+markov].drop();
+	db["prev_"+markov].drop();
 };
 
 db.system.js.save({_id: "add", value: add});
