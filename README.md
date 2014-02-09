@@ -17,7 +17,9 @@ mongo
 
 Tweaking the Markov Order
 =========================
-In the source code, to change the markov order, you have to change the `markov` variable at the top of the `reply` and `add` functions. 
+In the source code, to change the markov order, you can pass in a number at the end of every function. The markov order defaults to 3. 
+
+Beware, data is not preserved between changes in the markov order, as they use separate collections.
 
 Using jsMongoHal From Node.js
 ==================================

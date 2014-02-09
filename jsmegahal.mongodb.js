@@ -1,7 +1,7 @@
-var add = function(sentence) { 
+var add = function(sentence, wordRegex, markov) { 
 
-	var markov = 2;
-	var wordRegex = /[^a-zA-Z0-9,']+/;
+	var markov = markov || 3;
+	var wordRegex = wordRegex || /[^a-zA-Z0-9,']+/;
 
 	if(sentence.split(' ').length < markov) return;
 
@@ -67,9 +67,9 @@ var add = function(sentence) {
 	}
 }
 
-var reply = function(word) {
+var reply = function(word, markov) {
 
-	var markov = 2;
+	var markov = markov || 3;
 
 	db["words_"+markov].ensureIndex( { random: "2dsphere" } );
 	db["next_"+markov].ensureIndex( { random: "2dsphere" } );
@@ -158,9 +158,9 @@ var reply = function(word) {
 	return parts.join(' ');
 };
 
-var empty = function() {
+var empty = function(markov) {
 
-	var markov = 2;
+	var markov = markov || 3;
 
 	db["words_"+markov].drop();
 	db["quads_"+markov].drop();
