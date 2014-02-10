@@ -130,7 +130,10 @@ var reply = function(word, markov) {
 
 		nextWord = nextWord.word;
 
-		quad = insertQuad( createMiddleQuad( parts.slice(1, markov).push(nextWord) ) );
+		var quadArray = parts.slice(1, markov);
+		quadArray.push(nextWord);
+
+		quad = insertQuad( createMiddleQuad( quadArray ) );
 
 		parts.push(nextWord);
 
@@ -149,7 +152,10 @@ var reply = function(word, markov) {
 
 		prevWord = prevWord.word;
 
-		quad = insertQuad( createMiddleQuad( parts.slice(0, markov-1).unshift(prevWord) ) );
+		var quadArray = parts.slice(0, markov-1);
+		quadArray.unshift(prevWord);
+
+		quad = insertQuad( createMiddleQuad( quadArray ) );
 
 		parts.unshift(prevWord);
 		
